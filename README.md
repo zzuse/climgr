@@ -6,6 +6,7 @@ A cross-platform desktop application built with **Tauri**, **Next.js**, and **Ru
 
 -   **Command Management**: Create, edit, and delete shell commands.
 -   **Quick Execution**: Run commands directly from the UI and see the output in real-time.
+-   **Safe Mode Toggle**: Enable/disable command execution with visual indicators (🔒 Safe Mode / ⚡ Active Mode).
 -   **Global Shortcuts**: Assign keyboard shortcuts to trigger commands even when the app is in the background.
 -   **Modern UI**: Clean interface with Dark Mode support using Tailwind CSS.
 -   **Secure**: Runs locally on your machine with Rust-backed execution.
@@ -22,7 +23,7 @@ Before getting started, ensure you have the following installed:
 
 1.  **Clone the repository**:
     ```bash
-    git clone https://github.com/your-username/climgr.git
+    git clone https://github.com/zzuse/climgr.git
     cd climgr
     ```
 
@@ -63,6 +64,13 @@ To create a distributable application bundle (e.g., `.app`, `.dmg`, `.exe`, `.de
 ### Running Commands
 -   Click the **"Run"** button on any command card.
 -   The output (stdout/stderr) will appear in a collapsible section below the command.
+
+### Safe Mode
+-   Use the **Safe Mode toggle** in the header to control command execution:
+    -   🔒 **Safe Mode ON** (Orange): All commands are disabled for safety
+    -   ⚡ **Active Mode** (Green): Commands can be executed normally
+-   This is useful when you want to prevent accidental execution of privileged commands.
+-   The setting persists across app restarts.
 
 ### Shortcuts
 -   Shortcuts registered in the app work globally. Note that if a shortcut is already used by the system or another app, it might conflict.
