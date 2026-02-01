@@ -1,0 +1,22 @@
+# CLI Command Manager App - Task List
+
+- [ ] Planning & Setup
+    - [ ] Create implementation plan <!-- id: 0 -->
+    - [ ] Initialize Tauri project with Vite/React <!-- id: 1 -->
+    - [ ] Set up basic UI scaffolding (Tailwind/CSS) <!-- id: 2 -->
+- [ ] Core Feature: Command Management (CRUD)
+    - [ ] Define Rust data structures for Commands <!-- id: 3 -->
+    - [ ] Implement Rust backend commands (get_commands, add_command, update_command, delete_command) <!-- id: 4 -->
+    - [ ] Create UI for listing commands <!-- id: 5 -->
+    - [ ] Create UI for adding/editing commands <!-- id: 6 -->
+    - [ ] Implement persistence (store commands in a file/db) <!-- id: 7 -->
+- [ ] Core Feature: Execution
+    - [ ] Implement command execution logic in Rust <!-- id: 8 -->
+    - [ ] Add "Execute" button in UI and handle output <!-- id: 9 -->
+- [ ] Core Feature: Shortcuts
+    - [ ] Research Tauri global shortcut API <!-- id: 10 -->
+    - [ ] Implement global shortcut registration in Rust <!-- id: 11 -->
+    - [ ] Add UI for managing shortcuts per command <!-- id: 12 -->
+- [ ] Polish & Verification
+    - [ ] Verify functionality on macOS <!-- id: 13 -->
+    - [ ] Style polish (Dark mode/Glassmorphism) <!-- id: 14 -->
