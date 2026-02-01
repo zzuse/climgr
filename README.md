@@ -1,36 +1,86 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CLI Command Manager
+
+A cross-platform desktop application built with **Tauri**, **Next.js**, and **Rust** to manage and execute your frequently used CLI commands with a modern UI and global shortcuts.
+
+## Features
+
+-   **Command Management**: Create, edit, and delete shell commands.
+-   **Quick Execution**: Run commands directly from the UI and see the output in real-time.
+-   **Global Shortcuts**: Assign keyboard shortcuts to trigger commands even when the app is in the background.
+-   **Modern UI**: Clean interface with Dark Mode support using Tailwind CSS.
+-   **Secure**: Runs locally on your machine with Rust-backed execution.
+
+## Prerequisites
+
+Before getting started, ensure you have the following installed:
+
+-   **Node.js** (v18 or newer)
+-   **Rust** (latest stable) - [Install Rust](https://www.rust-lang.org/tools/install)
+-   **Tauri Prerequisites** (OS-specific dependencies) - [Follow the Tauri Guide](https://v2.tauri.app/start/prerequisites/)
 
 ## Getting Started
 
-First, run the development server:
+1.  **Clone the repository**:
+    ```bash
+    git clone https://github.com/your-username/climgr.git
+    cd climgr
+    ```
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+2.  **Install dependencies**:
+    ```bash
+    npm install
+    ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3.  **Run in Development Mode**:
+    This will start the Next.js frontend and the Tauri application window.
+    ```bash
+    npm run tauri dev
+    ```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Building for Production
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+To create a distributable application bundle (e.g., `.app`, `.dmg`, `.exe`, `.deb`):
 
-## Learn More
+1.  **Build the application**:
+    ```bash
+    npm run tauri build
+    ```
 
-To learn more about Next.js, take a look at the following resources:
+2.  **Locate the bundle**:
+    After the build completes, you can find the installers in:
+    -   **macOS**: `src-tauri/target/release/bundle/macos/` or `dmg/`
+    -   **Windows**: `src-tauri/target/release/bundle/msi/` or `nsis/`
+    -   **Linux**: `src-tauri/target/release/bundle/deb/` or `appimage/`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Usage
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Managing Commands
+-   Click **"Add Command"** to create a new entry.
+-   **Name**: A friendly name for the command (e.g., "List Files").
+-   **Script**: The actual shell script to run (e.g., `ls -la`).
+-   **Shortcut**: (Optional) Global hotkey (e.g., `Cmd+Shift+L`).
 
-## Deploy on Vercel
+### Running Commands
+-   Click the **"Run"** button on any command card.
+-   The output (stdout/stderr) will appear in a collapsible section below the command.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Shortcuts
+-   Shortcuts registered in the app work globally. Note that if a shortcut is already used by the system or another app, it might conflict.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Project Structure
+
+-   `src/` - Next.js frontend code (React components, pages, styles).
+-   `src-tauri/` - Rust backend code (Tauri configuration, commands, system integration).
+-   `src-tauri/tauri.conf.json` - Tauri configuration file.
+
+## Technologies
+
+-   [Tauri v2](https://v2.tauri.app)
+-   [Next.js](https://nextjs.org) (App Router)
+-   [React](https://react.dev)
+-   [Tailwind CSS](https://tailwindcss.com)
+-   [Rust](https://www.rust-lang.org)
+
+## License
+
+MIT
