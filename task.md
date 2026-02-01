@@ -4,12 +4,12 @@
     - [ ] Create implementation plan <!-- id: 0 -->
     - [ ] Initialize Tauri project with Vite/React <!-- id: 1 -->
     - [ ] Set up basic UI scaffolding (Tailwind/CSS) <!-- id: 2 -->
-- [ ] Core Feature: Command Management (CRUD)
-    - [ ] Define Rust data structures for Commands <!-- id: 3 -->
-    - [ ] Implement Rust backend commands (get_commands, add_command, update_command, delete_command) <!-- id: 4 -->
-    - [ ] Create UI for listing commands <!-- id: 5 -->
+- [x] Core Feature: Command Management (CRUD)
+    - [x] Define Rust data structures for Commands <!-- id: 3 -->
+    - [x] Implement Rust backend commands (get_commands, add_command, update_command, delete_command) <!-- id: 4 -->
+    - [x] Create UI for listing commands <!-- id: 5 -->
     - [ ] Create UI for adding/editing commands <!-- id: 6 -->
-    - [ ] Implement persistence (store commands in a file/db) <!-- id: 7 -->
+    - [x] Implement persistence (store commands in a file/db) <!-- id: 7 -->
 - [ ] Core Feature: Execution
     - [ ] Implement command execution logic in Rust <!-- id: 8 -->
     - [ ] Add "Execute" button in UI and handle output <!-- id: 9 -->
