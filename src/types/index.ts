@@ -2,8 +2,8 @@ export interface Command {
   id: string;
   name: string;
   script: string;
-  shortcut?: string | null;
-  description?: string | null;
+  shortcut?: string;
+  description?: string;
 }
 
 export interface Config {

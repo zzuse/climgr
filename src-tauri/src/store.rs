@@ -3,6 +3,19 @@ use std::fs::File;
 use std::io::{BufReader, BufWriter};
 use std::path::Path;
 
+/// Retrieves all commands from persistent storage.
+///
+/// Returns an empty vector if the file doesn't exist. This allows the app to start
+/// with no commands and add them later.
+///
+/// # Arguments
+///
+/// * `path` - Path to the commands JSON file
+///
+/// # Returns
+///
+/// * `Ok(Vec<Command>)` - Vector of commands (empty if file doesn't exist)
+/// * `Err(String)` - Error if file cannot be read or JSON is invalid
 pub fn get_commands(path: &Path) -> Result<Vec<Command>, String> {
     if !path.exists() {
         return Ok(vec![]);
@@ -14,6 +27,20 @@ pub fn get_commands(path: &Path) -> Result<Vec<Command>, String> {
     Ok(commands)
 }
 
+/// Saves commands to persistent storage.
+///
+/// Creates the parent directory if it doesn't exist. Writes commands as
+/// pretty-printed JSON for human readability.
+///
+/// # Arguments
+///
+/// * `path` - Path where the commands JSON file should be saved
+/// * `commands` - Slice of commands to save
+///
+/// # Returns
+///
+/// * `Ok(())` - Commands were successfully saved
+/// * `Err(String)` - Error if directory creation or file write fails
 pub fn save_commands(path: &Path, commands: &[Command]) -> Result<(), String> {
     // Ensure parent directory exists
     if let Some(parent) = path.parent() {
@@ -26,6 +53,19 @@ pub fn save_commands(path: &Path, commands: &[Command]) -> Result<(), String> {
     Ok(())
 }
 
+/// Retrieves application configuration from storage.
+///
+/// Returns default configuration (safe_mode: false) if the file doesn't exist.
+/// This allows the app to run with sensible defaults on first launch.
+///
+/// # Arguments
+///
+/// * `path` - Path to the config JSON file
+///
+/// # Returns
+///
+/// * `Ok(Config)` - Configuration object (default if file doesn't exist)
+/// * `Err(String)` - Error if file cannot be read or JSON is invalid
 pub fn get_config(path: &Path) -> Result<Config, String> {
     if !path.exists() {
         // Return default config if file doesn't exist
@@ -38,6 +78,20 @@ pub fn get_config(path: &Path) -> Result<Config, String> {
     Ok(config)
 }
 
+/// Saves application configuration to persistent storage.
+///
+/// Creates the parent directory if it doesn't exist. Writes config as
+/// pretty-printed JSON for human readability.
+///
+/// # Arguments
+///
+/// * `path` - Path where the config JSON file should be saved
+/// * `config` - Configuration object to save
+///
+/// # Returns
+///
+/// * `Ok(())` - Configuration was successfully saved
+/// * `Err(String)` - Error if directory creation or file write fails
 pub fn save_config(path: &Path, config: &Config) -> Result<(), String> {
     // Ensure parent directory exists
     if let Some(parent) = path.parent() {

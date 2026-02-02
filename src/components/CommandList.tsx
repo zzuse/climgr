@@ -6,12 +6,6 @@ import { Command } from "../types";
 import CommandForm from "./CommandForm";
 import SafeModeToggle from "./SafeModeToggle";
 
-declare global {
-  interface Window {
-    __TAURI_INTERNALS__: unknown;
-  }
-}
-
 type ExecutionState = {
   loading: boolean;
   output: string | null;
