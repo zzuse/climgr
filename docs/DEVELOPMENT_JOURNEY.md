@@ -97,3 +97,150 @@ To continue development on this project, follow these steps:
 *   `src-tauri/capabilities/default.json`: Security capabilities (which Tauri commands the frontend is allowed to call).
 *   `next.config.ts`: Next.js config (crucial setting: `output: 'export'`).
 *   `src-tauri/Cargo.toml`: Rust dependencies.
+
+## 5. Safe Mode Feature Implementation
+
+### Overview
+Added a configurable **Safe Mode** feature to prevent accidental command execution while maintaining the ability to execute privileged commands when needed.
+
+### Implementation Details
+
+#### Backend (Rust)
+
+**New Files/Modules:**
+- `Config` struct in `src-tauri/src/models.rs` for application settings
+- Config storage functions in `src-tauri/src/store.rs`
+- Safe mode check in `run_command_script()` function
+
+**Key Changes:**
+
+1. **Config Model** (`models.rs`):
+   ```rust
+   #[derive(Debug, Serialize, Deserialize, Clone)]
+   pub struct Config {
+       pub safe_mode: bool,
+   }
+   ```
+
+2. **Config Storage** (`store.rs`):
+   - `get_config(path: &Path) -> Result<Config, String>` - Loads config, returns default if missing
+   - `save_config(path: &Path, config: &Config) -> Result<(), String>` - Persists config to JSON
+
+3. **Safe Mode Check** (`lib.rs`):
+   - Modified `run_command_script()` to check config before execution
+   - Returns error message when safe mode is enabled
+   - Applies to both manual execution and keyboard shortcuts
+
+4. **New Tauri Commands**:
+   - `get_config` - Retrieves current configuration
+   - `update_config` - Updates and persists configuration
+
+**Error Handling Improvements:**
+- Changed `get_store_path()` and `get_config_path()` to return `Result` instead of panicking
+- Added error propagation with `?` operator throughout
+- Provides meaningful error messages instead of crashes
+
+#### Frontend (TypeScript/React)
+
+**New Files:**
+- `src/components/SafeModeToggle.tsx` - Toggle switch component with visual indicators
+
+**Key Changes:**
+
+1. **Type Definitions** (`src/types/index.ts`):
+   ```typescript
+   export interface Config {
+     safe_mode: boolean;
+   }
+   ```
+
+2. **SafeModeToggle Component**:
+   - Visual toggle switch (Orange = Safe Mode ON 🔒, Green = Active Mode ⚡)
+   - Real-time sync with backend
+   - Status labels showing current mode
+   - Error handling for config failures
+   - Browser preview support
+
+3. **UI Integration** (`CommandList.tsx`):
+   - Added toggle to header between title and "Add Command" button
+   - Responsive layout with proper spacing
+
+### Testing
+
+**Compile Backend:**
+
+```bash
+# Navigate to the Rust backend directory
+cd src-tauri
+
+# Check for compilation errors (faster than full build)
+cargo check
+
+# Or build in debug mode
+cargo build
+
+# Build in release mode (optimized)
+cargo build --release
+```
+
+**Running Tests:**
+
+Due to macOS permission issues with the default temp directory, use a project-local temp directory:
+
+```bash
+cd src-tauri
+
+# Create local temp directory (first time only)
+mkdir -p .tmp
+
+# Run tests with custom temp directory
+TMPDIR=$(pwd)/.tmp cargo test -- --nocapture
+
+# Run tests with output visible (shows println! and test names)
+cargo test -- --nocapture
+
+# Run all tests
+cargo test
+
+# Run tests for a specific module
+cargo test models
+cargo test store
+
+# Run a specific test by name
+cargo test test_save_and_load_commands
+
+```
+
+**Test Coverage:**
+- ✅ `test_config_default` - Config serialization
+- ✅ `test_command_struct_serialization` - Command model serialization
+- ✅ `test_save_and_load_config` - Config persistence
+- ✅ `test_save_and_load_commands` - Command persistence
+
+**Manual Testing:**
+1. Launch app: `npm run tauri dev`
+2. Toggle safe mode switch in header
+3. Try executing a command with safe mode ON (should fail with error)
+4. Disable safe mode and execute command (should work)
+5. Verify setting persists after app restart
+
+### File Locations
+
+- **Commands**: `~/.local/share/app/commands.json` (or platform equivalent)
+- **Config**: `~/.local/share/app/config.json` (or platform equivalent)
+
+### User Features
+
+1. **Safe Mode Toggle**: Visual switch in app header
+2. **Status Indicators**: 
+   - 🔒 Orange = Safe Mode (commands disabled)
+   - ⚡ Green = Active Mode (commands enabled)
+3. **Error Messages**: Clear feedback when commands are blocked
+4. **Persistence**: Settings saved across app restarts
+
+### Documentation
+
+Full implementation details available in:
+- `docs/plans/safe-mode-implementation.md` - Complete walkthrough with code examples
+- `README.md` - User-facing feature documentation
+

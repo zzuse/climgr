@@ -8,9 +8,9 @@ use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 
 fn run_command_script(app_handle: &AppHandle, script: &str) -> Result<String, String> {
     // Check safe mode
-    let config_path = get_config_path(app_handle);
+    let config_path = get_config_path(app_handle)?;
     let config = store::get_config(&config_path)?;
-    
+
     if config.safe_mode {
         return Err("Command execution disabled in safe mode. Disable safe mode in settings to execute commands.".to_string());
     }
@@ -45,14 +45,16 @@ fn execute_command(app_handle: tauri::AppHandle, command_id: String) -> Result<S
 }
 
 fn get_store_path(app: &AppHandle) -> Result<PathBuf, String> {
-    Ok(app.path()
+    Ok(app
+        .path()
         .app_data_dir()
         .map_err(|e| format!("Failed to get app data dir: {}", e))?
         .join("commands.json"))
 }
 
 fn get_config_path(app: &AppHandle) -> Result<PathBuf, String> {
-    Ok(app.path()
+    Ok(app
+        .path()
         .app_data_dir()
         .map_err(|e| format!("Failed to get app data dir: {}", e))?
         .join("config.json"))
@@ -151,14 +153,17 @@ pub fn run() {
                                 let shortcut_str = shortcut.to_string();
                                 if let Ok(path) = get_store_path(app_handle) {
                                     if let Ok(commands) = store::get_commands(&path) {
-                                    if let Some(command) = commands.iter().find(|c| {
-                                        c.shortcut.as_deref() == Some(shortcut_str.as_str())
-                                    }) {
-                                        if let Err(e) = run_command_script(app_handle, &command.script) {
-                                            log::error!(
-                                                "Failed to execute shortcut command: {}",
-                                                e
-                                            );
+                                        if let Some(command) = commands.iter().find(|c| {
+                                            c.shortcut.as_deref() == Some(shortcut_str.as_str())
+                                        }) {
+                                            if let Err(e) =
+                                                run_command_script(&app_handle, &command.script)
+                                            {
+                                                log::error!(
+                                                    "Failed to execute shortcut command: {}",
+                                                    e
+                                                );
+                                            }
                                         }
                                     }
                                 }
