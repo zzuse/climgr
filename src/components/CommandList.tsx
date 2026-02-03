@@ -18,6 +18,7 @@ export default function CommandList() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCommand, setEditingCommand] = useState<Command | null>(null);
   const [executionStates, setExecutionStates] = useState<Record<string, ExecutionState>>({});
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const fetchCommands = useCallback(async () => {
     try {
@@ -193,6 +194,16 @@ export default function CommandList() {
                 className="px-3 py-1 text-sm text-zinc-600 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 border border-zinc-200 dark:border-zinc-700 rounded hover:border-red-300 dark:hover:border-red-700"
               >
                 Delete
+              </button>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(cmd.script);
+                  setCopiedId(cmd.id);
+                  setTimeout(() => setCopiedId(null), 1000);
+                }}
+                className="px-3 py-1 text-sm text-zinc-600 dark:text-zinc-400 hover:text-purple-600 dark:hover:text-purple-400 border border-zinc-200 dark:border-zinc-700 rounded hover:border-purple-300 dark:hover:border-purple-700"
+              >
+                {copiedId === cmd.id ? 'Copied!' : 'Copy'}
               </button>
             </div>
 
