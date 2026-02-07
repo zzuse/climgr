@@ -86,26 +86,21 @@ export default function CommandList() {
     } catch (err) {
       console.error("Failed to execute command:", err);
 
-      // Mock behavior for browser
-      if (typeof window !== 'undefined' && !window.__TAURI_INTERNALS__) {
-        console.log("Mocking execution for", cmd.name);
-        setTimeout(() => {
-          setExecutionStates(prev => ({
-            ...prev,
-            [cmd.id]: {
-              loading: false,
-              output: `Mock output for: ${cmd.script}\n\nFiles found:\n- file1.txt\n- file2.js\n\n(Executed successfully)`,
-              error: null
-            }
-          }));
-        }, 1000);
-        return;
-      }
-
+      // If it was cancelled/killed, it might show as an error
       setExecutionStates(prev => ({
         ...prev,
-        [cmd.id]: { loading: false, output: null, error: String(err) }
+        [cmd.id]: { loading: false, output: prev[cmd.id]?.output || null, error: String(err) }
       }));
+    }
+  };
+
+  const handleKill = async (cmd: Command) => {
+    try {
+      await invoke("kill_command", { commandId: cmd.id });
+      // We don't set loading to false here, because execute_command will return/throw when killed
+    } catch (err) {
+      console.error("Failed to kill command:", err);
+      alert("Failed to kill command: " + err);
     }
   };
 
@@ -160,38 +155,40 @@ export default function CommandList() {
             </div>
 
             <div className="mt-4 flex justify-end gap-2">
-              <button
-                onClick={() => handleRun(cmd)}
-                disabled={executionStates[cmd.id]?.loading}
-                className="px-3 py-1 text-sm bg-green-600 hover:bg-green-700 text-white rounded disabled:opacity-50 transition-colors flex items-center gap-1"
-              >
-                {executionStates[cmd.id]?.loading ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-1 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Running...
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Run
-                  </>
-                )}
-              </button>
+              {executionStates[cmd.id]?.loading ? (
+                <button
+                  onClick={() => handleKill(cmd)}
+                  className="px-3 py-1 text-sm bg-red-600 hover:bg-red-700 text-white rounded transition-colors flex items-center gap-1"
+                >
+                  <svg className="animate-spin -ml-1 mr-1 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Kill Running...
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleRun(cmd)}
+                  className="px-3 py-1 text-sm bg-green-600 hover:bg-green-700 text-white rounded transition-colors flex items-center gap-1"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Run
+                </button>
+              )}
               <button
                 onClick={() => handleEdit(cmd)}
-                className="px-3 py-1 text-sm text-zinc-600 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 border border-zinc-200 dark:border-zinc-700 rounded hover:border-blue-300 dark:hover:border-blue-700"
+                disabled={executionStates[cmd.id]?.loading}
+                className="px-3 py-1 text-sm text-zinc-600 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 border border-zinc-200 dark:border-zinc-700 rounded hover:border-blue-300 dark:hover:border-blue-700 disabled:opacity-50"
               >
                 Edit
               </button>
               <button
                 onClick={() => handleDelete(cmd.id)}
-                className="px-3 py-1 text-sm text-zinc-600 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 border border-zinc-200 dark:border-zinc-700 rounded hover:border-red-300 dark:hover:border-red-700"
+                disabled={executionStates[cmd.id]?.loading}
+                className="px-3 py-1 text-sm text-zinc-600 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 border border-zinc-200 dark:border-zinc-700 rounded hover:border-red-300 dark:hover:border-red-700 disabled:opacity-50"
               >
                 Delete
               </button>
@@ -201,7 +198,8 @@ export default function CommandList() {
                   setCopiedId(cmd.id);
                   setTimeout(() => setCopiedId(null), 1000);
                 }}
-                className="px-3 py-1 text-sm text-zinc-600 dark:text-zinc-400 hover:text-purple-600 dark:hover:text-purple-400 border border-zinc-200 dark:border-zinc-700 rounded hover:border-purple-300 dark:hover:border-purple-700"
+                disabled={executionStates[cmd.id]?.loading}
+                className="px-3 py-1 text-sm text-zinc-600 dark:text-zinc-400 hover:text-purple-600 dark:hover:text-purple-400 border border-zinc-200 dark:border-zinc-700 rounded hover:border-purple-300 dark:hover:border-purple-700 disabled:opacity-50"
               >
                 {copiedId === cmd.id ? 'Copied!' : 'Copy'}
               </button>

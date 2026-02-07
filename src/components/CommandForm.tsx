@@ -13,6 +13,7 @@ interface CommandFormProps {
 export default function CommandForm({ commandToEdit, onSuccess, onCancel }: CommandFormProps) {
   const [name, setName] = useState(commandToEdit?.name || '');
   const [script, setScript] = useState(commandToEdit?.script || '');
+  const [killScript, setKillScript] = useState(commandToEdit?.kill_script || '');
   const [description, setDescription] = useState(commandToEdit?.description || '');
   const [shortcut, setShortcut] = useState(commandToEdit?.shortcut || '');
   const [error, setError] = useState<string | null>(null);
@@ -38,8 +39,9 @@ export default function CommandForm({ commandToEdit, onSuccess, onCancel }: Comm
           ...commandToEdit,
           name,
           script,
-          description: description || null,
-          shortcut: shortcut || null,
+          kill_script: killScript || undefined,
+          description: description || undefined,
+          shortcut: shortcut || undefined,
         };
         await invoke('update_command', { command: updatedCommand });
       } else {
@@ -47,8 +49,9 @@ export default function CommandForm({ commandToEdit, onSuccess, onCancel }: Comm
             id: crypto.randomUUID(),
             name,
             script,
-            description: description || null,
-            shortcut: shortcut || null,
+            kill_script: killScript || undefined,
+            description: description || undefined,
+            shortcut: shortcut || undefined,
         };
         await invoke('add_command', { command: newCommand });
       }
@@ -98,6 +101,20 @@ export default function CommandForm({ commandToEdit, onSuccess, onCancel }: Comm
               placeholder="e.g., ls -la"
               disabled={isSubmitting}
             />
+          </div>
+
+          <div>
+            <label htmlFor="command-kill-script" className="block text-sm font-medium mb-1 dark:text-zinc-300">Kill Script</label>
+            <input
+              id="command-kill-script"
+              type="text"
+              value={killScript}
+              onChange={(e) => setKillScript(e.target.value)}
+              className="w-full p-2 border rounded dark:bg-zinc-800 dark:border-zinc-700 dark:text-white font-mono text-sm"
+              placeholder="e.g., pkill -f my-process"
+              disabled={isSubmitting}
+            />
+            <p className="text-[10px] text-zinc-500 mt-1">Optional: Custom command to stop the process. Falls back to PID kill if empty.</p>
           </div>
 
           <div>

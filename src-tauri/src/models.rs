@@ -5,6 +5,7 @@ pub struct Command {
     pub id: String,
     pub name: String,
     pub script: String,
+    pub kill_script: Option<String>,
     pub shortcut: Option<String>,
     pub description: Option<String>,
 }
@@ -24,6 +25,7 @@ mod tests {
             id: "123".to_string(),
             name: "Test Command".to_string(),
             script: "echo hello".to_string(),
+            kill_script: Some("pkill -f hello".to_string()),
             shortcut: Some("Ctrl+T".to_string()),
             description: Some("A test command".to_string()),
         };
@@ -36,6 +38,7 @@ mod tests {
         assert_eq!(command.id, deserialized.id);
         assert_eq!(command.name, deserialized.name);
         assert_eq!(command.script, deserialized.script);
+        assert_eq!(command.kill_script, deserialized.kill_script);
         assert_eq!(command.shortcut, deserialized.shortcut);
         assert_eq!(command.description, deserialized.description);
     }

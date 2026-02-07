@@ -244,3 +244,61 @@ Full implementation details available in:
 - `docs/plans/safe-mode-implementation.md` - Complete walkthrough with code examples
 - `README.md` - User-facing feature documentation
 
+## 6. Process Management Feature Implementation
+
+### Overview
+Added the ability to terminate long-running processes directly from the UI. This includes support for both standard PID-based termination and custom "Kill Scripts" (e.g., `pkill`).
+
+### Implementation Details
+
+#### Backend (Rust)
+
+**New Components:**
+- **ProcessManager**: A thread-safe registry (`Mutex<HashMap<String, u32>>`) that maps Command IDs to their active PIDs.
+- **Kill Logic**: 
+  - Cross-platform support: Uses `kill -9` on Unix-like systems and `taskkill /F /PID` on Windows.
+  - Priority-based termination: Custom kill scripts take precedence over PID-based termination.
+
+**Key Changes:**
+
+1. **Model Update** (`models.rs`):
+   Added `kill_script: Option<String>` to the `Command` struct.
+
+2. **Process Registry** (`lib.rs`):
+   ```rust
+   struct ProcessManager {
+       processes: Mutex<HashMap<String, u32>>,
+   }
+   ```
+
+3. **Tauri Commands**:
+   - `execute_command`: Now registers the spawned PID in the `ProcessManager`.
+   - `kill_command`: Checks for a custom script first, then falls back to killing the registered PID.
+
+#### Frontend (TypeScript/React)
+
+**Key Changes:**
+
+1. **UI Feedback**:
+   - The "Run" button transforms into a "Kill Running..." button when a command is active.
+   - Execution state now tracks `loading` status to toggle UI elements.
+
+2. **Command Form**:
+   - Added a "Kill Script" field to allow users to specify custom termination commands (e.g., `pkill -f "my-server"`).
+
+3. **Safety Measures**:
+   - "Edit", "Delete", and "Copy" buttons are disabled while a command is running to prevent race conditions or inconsistent states.
+
+### Testing
+
+**Backend Tests:**
+- Updated `test_save_and_load_commands` to verify `kill_script` serialization.
+- Verified compilation and state management with `cargo check`.
+
+**Manual Testing:**
+1. Create a long-running command (e.g., `sleep 60`).
+2. Run the command and verify the button changes to "Kill Running...".
+3. Click "Kill" and verify the process terminates.
+4. Add a custom kill script (e.g., `pkill sleep`) and verify it takes precedence.
+
+

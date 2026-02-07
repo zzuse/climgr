@@ -6,6 +6,8 @@ A cross-platform desktop application built with **Tauri**, **Next.js**, and **Ru
 
 -   **Command Management**: Create, edit, and delete shell commands.
 -   **Quick Execution**: Run commands directly from the UI and see the output in real-time.
+-   **Process Management**: Kill long-running processes directly from the UI.
+-   **Custom Kill Scripts**: Specify a custom command (e.g., `pkill`) to stop specific processes, with automatic PID-based fallback.
 -   **Safe Mode Toggle**: Enable/disable command execution with visual indicators (🔒 Safe Mode / ⚡ Active Mode).
 -   **Global Shortcuts**: Assign keyboard shortcuts to trigger commands even when the app is in the background.
 -   **Modern UI**: Clean interface with Dark Mode support using Tailwind CSS.
@@ -59,11 +61,13 @@ To create a distributable application bundle (e.g., `.app`, `.dmg`, `.exe`, `.de
 -   Click **"Add Command"** to create a new entry.
 -   **Name**: A friendly name for the command (e.g., "List Files").
 -   **Script**: The actual shell script to run (e.g., `ls -la`).
+-   **Kill Script**: (Optional) Custom command to stop the process (e.g., `pkill -f server`). If empty, it uses PID termination.
 -   **Shortcut**: (Optional) Global hotkey (e.g., `Cmd+Shift+L`).
 
-### Running Commands
+### Running & Stopping Commands
 -   Click the **"Run"** button on any command card.
 -   The output (stdout/stderr) will appear in a collapsible section below the command.
+-   For long-running processes, click the **"Kill Running..."** button to stop the execution.
 
 ### Safe Mode
 -   Use the **Safe Mode toggle** in the header to control command execution:

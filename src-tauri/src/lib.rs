@@ -2,11 +2,21 @@ pub mod models;
 pub mod store;
 
 use crate::models::{Command, Config};
+use std::collections::HashMap;
 use std::path::PathBuf;
-use tauri::{AppHandle, Manager};
+use std::sync::Mutex;
+use tauri::{AppHandle, Manager, State};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 
-fn run_command_script(app_handle: &AppHandle, script: &str) -> Result<String, String> {
+struct ProcessManager {
+    processes: Mutex<HashMap<String, u32>>,
+}
+
+fn run_command_script(
+    app_handle: &AppHandle,
+    command_id: &str,
+    script: &str,
+) -> Result<String, String> {
     // Check safe mode
     let config_path = get_config_path(app_handle)?;
     let config = store::get_config(&config_path)?;
@@ -15,20 +25,39 @@ fn run_command_script(app_handle: &AppHandle, script: &str) -> Result<String, St
         return Err("Command execution disabled in safe mode. Disable safe mode in settings to execute commands.".to_string());
     }
 
-    log::info!("Executing script: {}", script);
-    let output = std::process::Command::new("sh")
+    log::info!("Executing script for command {}: {}", command_id, script);
+
+    let child = std::process::Command::new("sh")
         .arg("-c")
         .arg(script)
-        .output();
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .spawn()
+        .map_err(|e| format!("Failed to spawn command: {}", e))?;
 
-    match output {
-        Ok(output) => {
-            let stdout = String::from_utf8_lossy(&output.stdout);
-            let stderr = String::from_utf8_lossy(&output.stderr);
-            Ok(format!("{}{}", stdout, stderr))
-        }
-        Err(e) => Err(format!("Failed to execute command: {}", e)),
+    let pid = child.id();
+
+    {
+        let state = app_handle.state::<ProcessManager>();
+        state
+            .processes
+            .lock()
+            .unwrap()
+            .insert(command_id.to_string(), pid);
     }
+
+    let wait_result = child.wait_with_output();
+
+    {
+        let state = app_handle.state::<ProcessManager>();
+        state.processes.lock().unwrap().remove(command_id);
+    }
+
+    let output = wait_result.map_err(|e| format!("Failed to wait for command: {}", e))?;
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    Ok(format!("{}{}", stdout, stderr))
 }
 
 /// Executes a command by its ID.
@@ -83,10 +112,99 @@ async fn execute_command(app_handle: tauri::AppHandle, command_id: String) -> Re
 
     let script = command.script.clone();
     let app_handle_clone = app_handle.clone();
+    let command_id_clone = command_id.clone();
 
-    tauri::async_runtime::spawn_blocking(move || run_command_script(&app_handle_clone, &script))
-        .await
-        .map_err(|e| format!("Failed to execute command task: {}", e))?
+    tauri::async_runtime::spawn_blocking(move || {
+        run_command_script(&app_handle_clone, &command_id_clone, &script)
+    })
+    .await
+    .map_err(|e| format!("Failed to execute command task: {}", e))?
+}
+
+/// Kills a running command by its ID.
+///
+/// # Arguments
+///
+/// * `app_handle` - The Tauri application handle
+/// * `command_id` - The unique identifier of the command to kill
+///
+/// # Returns
+///
+/// * `Ok(())` - Command was successfully killed or was not running
+/// * `Err(String)` - Error message if killing failed
+#[tauri::command]
+fn kill_command(app_handle: AppHandle, state: State<ProcessManager>, command_id: String) -> Result<(), String> {
+    // 1. Try custom kill script if it exists
+    let path = get_store_path(&app_handle)?;
+    let commands = store::get_commands(&path)?;
+    
+    if let Some(command) = commands.iter().find(|c| c.id == command_id) {
+        if let Some(kill_script) = &command.kill_script {
+            if !kill_script.trim().is_empty() {
+                log::info!("Executing custom kill script for command {}: {}", command_id, kill_script);
+                let output = std::process::Command::new("sh")
+                    .arg("-c")
+                    .arg(kill_script)
+                    .output()
+                    .map_err(|e| format!("Failed to execute kill script: {}", e))?;
+                
+                if !output.status.success() {
+                    log::warn!("Kill script exited with error: {}", String::from_utf8_lossy(&output.stderr));
+                }
+                // We return Ok here because the script was executed. 
+                // The process manager will clean up the PID if/when the main process dies.
+                return Ok(());
+            }
+        }
+    }
+
+    // 2. Fallback to PID-based kill
+    let pid = {
+        let procs = state.processes.lock().unwrap();
+        procs.get(&command_id).copied()
+    };
+
+    if let Some(pid) = pid {
+        log::info!("Killing process {} for command {}", pid, command_id);
+
+        #[cfg(unix)]
+        {
+            let output = std::process::Command::new("kill")
+                .arg("-9")
+                .arg(pid.to_string())
+                .output()
+                .map_err(|e| format!("Failed to execute kill command: {}", e))?;
+
+            if !output.status.success() {
+                return Err(format!(
+                    "Kill command failed: {}",
+                    String::from_utf8_lossy(&output.stderr)
+                ));
+            }
+        }
+
+        #[cfg(windows)]
+        {
+            let output = std::process::Command::new("taskkill")
+                .arg("/F")
+                .arg("/PID")
+                .arg(pid.to_string())
+                .output()
+                .map_err(|e| format!("Failed to execute taskkill command: {}", e))?;
+
+            if !output.status.success() {
+                return Err(format!(
+                    "Taskkill command failed: {}",
+                    String::from_utf8_lossy(&output.stderr)
+                ));
+            }
+        }
+
+        // The process removal from the map will happen in the run_command_script thread
+        // when wait_with_output returns.
+    }
+
+    Ok(())
 }
 
 fn get_store_path(app: &AppHandle) -> Result<PathBuf, String> {
@@ -383,9 +501,11 @@ pub fn run() {
                                         if let Some(command) = commands.iter().find(|c| {
                                             c.shortcut.as_deref() == Some(shortcut_str.as_str())
                                         }) {
-                                            if let Err(e) =
-                                                run_command_script(&app_handle, &command.script)
-                                            {
+                                            if let Err(e) = run_command_script(
+                                                &app_handle,
+                                                &command.id,
+                                                &command.script,
+                                            ) {
                                                 log::error!(
                                                     "Failed to execute shortcut command: {}",
                                                     e
@@ -404,12 +524,16 @@ pub fn run() {
 
             Ok(())
         })
+        .manage(ProcessManager {
+            processes: Mutex::new(HashMap::new()),
+        })
         .invoke_handler(tauri::generate_handler![
             get_commands,
             add_command,
             update_command,
             delete_command,
             execute_command,
+            kill_command,
             get_config,
             update_config
         ])
