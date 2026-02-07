@@ -72,7 +72,7 @@ fn run_command_script(app_handle: &AppHandle, script: &str) -> Result<String, St
 /// This function checks the safe mode configuration before executing any command.
 /// If safe mode is enabled, execution will fail with an appropriate error message.
 #[tauri::command]
-fn execute_command(app_handle: tauri::AppHandle, command_id: String) -> Result<String, String> {
+async fn execute_command(app_handle: tauri::AppHandle, command_id: String) -> Result<String, String> {
     let path = get_store_path(&app_handle)?;
     let commands = store::get_commands(&path)?;
 
@@ -81,7 +81,12 @@ fn execute_command(app_handle: tauri::AppHandle, command_id: String) -> Result<S
         .find(|c| c.id == command_id)
         .ok_or_else(|| String::from("Command not found"))?;
 
-    run_command_script(&app_handle, &command.script)
+    let script = command.script.clone();
+    let app_handle_clone = app_handle.clone();
+
+    tauri::async_runtime::spawn_blocking(move || run_command_script(&app_handle_clone, &script))
+        .await
+        .map_err(|e| format!("Failed to execute command task: {}", e))?
 }
 
 fn get_store_path(app: &AppHandle) -> Result<PathBuf, String> {
