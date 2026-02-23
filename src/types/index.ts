@@ -10,4 +10,5 @@ export interface Command {
 export interface Config {
   safe_mode: boolean;
   commands_path?: string;
+  accessibility_notice_dismissed?: boolean;
 }

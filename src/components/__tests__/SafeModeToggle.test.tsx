@@ -13,7 +13,7 @@ describe('SafeModeToggle Component', () => {
     });
 
     it('should render the toggle button', async () => {
-        vi.mocked(invoke).mockResolvedValue({ safe_mode: false });
+        vi.mocked(invoke).mockResolvedValue({ safe_mode: false, accessibility_notice_dismissed: false });
 
         render(<SafeModeToggle />);
 
@@ -23,7 +23,7 @@ describe('SafeModeToggle Component', () => {
     });
 
     it('should display "Active Mode" when safe mode is off', async () => {
-        vi.mocked(invoke).mockResolvedValue({ safe_mode: false });
+        vi.mocked(invoke).mockResolvedValue({ safe_mode: false, accessibility_notice_dismissed: false });
 
         render(<SafeModeToggle />);
 
@@ -34,7 +34,7 @@ describe('SafeModeToggle Component', () => {
     });
 
     it('should display "Safe Mode" when safe mode is on', async () => {
-        vi.mocked(invoke).mockResolvedValue({ safe_mode: true });
+        vi.mocked(invoke).mockResolvedValue({ safe_mode: true, accessibility_notice_dismissed: false });
 
         render(<SafeModeToggle />);
 
@@ -45,7 +45,7 @@ describe('SafeModeToggle Component', () => {
     });
 
     it('should have correct aria-label for accessibility', async () => {
-        vi.mocked(invoke).mockResolvedValue({ safe_mode: false });
+        vi.mocked(invoke).mockResolvedValue({ safe_mode: false, accessibility_notice_dismissed: false });
 
         render(<SafeModeToggle />);
 
@@ -59,7 +59,7 @@ describe('SafeModeToggle Component', () => {
         const user = userEvent.setup();
 
         // Initial state: safe mode off
-        vi.mocked(invoke).mockResolvedValueOnce({ safe_mode: false });
+        vi.mocked(invoke).mockResolvedValueOnce({ safe_mode: false, accessibility_notice_dismissed: false });
         // After toggle: safe mode on
         vi.mocked(invoke).mockResolvedValueOnce(undefined);
 
@@ -76,21 +76,21 @@ describe('SafeModeToggle Component', () => {
 
         // Verify update_config was called
         expect(invoke).toHaveBeenCalledWith('update_config', {
-            config: { safe_mode: true },
+            config: { safe_mode: true, accessibility_notice_dismissed: false },
         });
     });
 
     it('should show loading state during toggle', async () => {
         const user = userEvent.setup();
 
-        vi.mocked(invoke).mockResolvedValueOnce({ safe_mode: false });
+        vi.mocked(invoke).mockResolvedValueOnce({ safe_mode: false, accessibility_notice_dismissed: false });
 
         // Make update slow to see loading state
         let resolveUpdate: () => void;
         const updatePromise = new Promise<void>((resolve) => {
             resolveUpdate = resolve;
         });
-        vi.mocked(invoke).mockReturnValueOnce(updatePromise as any);
+        vi.mocked(invoke).mockReturnValueOnce(updatePromise as unknown as Promise<unknown>);
 
         render(<SafeModeToggle />);
 
@@ -113,7 +113,7 @@ describe('SafeModeToggle Component', () => {
     });
 
     it('should call get_config on mount', async () => {
-        vi.mocked(invoke).mockResolvedValue({ safe_mode: false });
+        vi.mocked(invoke).mockResolvedValue({ safe_mode: false, accessibility_notice_dismissed: false });
 
         render(<SafeModeToggle />);
 
@@ -145,7 +145,7 @@ describe('SafeModeToggle Component', () => {
     });
 
     it('should have correct CSS classes based on state', async () => {
-        vi.mocked(invoke).mockResolvedValue({ safe_mode: true });
+        vi.mocked(invoke).mockResolvedValue({ safe_mode: true, accessibility_notice_dismissed: false });
 
         render(<SafeModeToggle />);
 

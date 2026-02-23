@@ -87,6 +87,7 @@ pub fn get_config(path: &Path) -> Result<Config, String> {
         return Ok(Config {
             safe_mode: false,
             commands_path: None,
+            accessibility_notice_dismissed: Some(false),
         });
     }
 
@@ -200,6 +201,7 @@ mod tests {
         let config = Config {
             safe_mode: true,
             commands_path: None,
+            accessibility_notice_dismissed: Some(false),
         };
         save_config(&file_path, &config).expect("Failed to save config");
 

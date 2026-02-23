@@ -6,6 +6,7 @@ import { Command } from "../types";
 import CommandForm from "./CommandForm";
 import SafeModeToggle from "./SafeModeToggle";
 import StorageSettings from "./StorageSettings";
+import AccessibilityNotice from "./AccessibilityNotice";
 
 type ExecutionState = {
   loading: boolean;
@@ -135,6 +136,8 @@ export default function CommandList() {
           </button>
         </div>
       </div>
+
+      <AccessibilityNotice />
 
       {isSettingsOpen && (
         <div className="mb-6">

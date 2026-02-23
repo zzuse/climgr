@@ -525,6 +525,27 @@ fn ensure_storage_directory(app_handle: tauri::AppHandle) -> Result<String, Stri
     Ok(path.to_string_lossy().to_string())
 }
 
+#[tauri::command]
+fn open_accessibility_settings() -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    {
+        std::process::Command::new("open")
+            .arg("x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")
+            .spawn()
+            .map_err(|e| format!("Failed to open accessibility settings: {}", e))?;
+        Ok(())
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        Err("This feature is only available on macOS".to_string())
+    }
+}
+
+#[tauri::command]
+fn is_macos() -> bool {
+    cfg!(target_os = "macos")
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -584,7 +605,9 @@ pub fn run() {
             kill_command,
             get_config,
             update_config,
-            ensure_storage_directory
+            ensure_storage_directory,
+            open_accessibility_settings,
+            is_macos
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

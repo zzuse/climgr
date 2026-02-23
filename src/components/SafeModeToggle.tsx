@@ -34,7 +34,7 @@ export default function SafeModeToggle() {
     const toggleSafeMode = useCallback(async () => {
         if (!config) return;
 
-        const newConfig: Config = { safe_mode: !config.safe_mode };
+        const newConfig: Config = { ...config, safe_mode: !config.safe_mode };
 
         try {
             setLoading(true);

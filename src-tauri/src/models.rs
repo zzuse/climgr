@@ -14,6 +14,7 @@ pub struct Command {
 pub struct Config {
     pub safe_mode: bool,
     pub commands_path: Option<String>,
+    pub accessibility_notice_dismissed: Option<bool>,
 }
 
 #[cfg(test)]
