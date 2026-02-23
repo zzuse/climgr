@@ -8,6 +8,7 @@ A cross-platform desktop application built with **Tauri**, **Next.js**, and **Ru
 -   **Quick Execution**: Run commands directly from the UI and see the output in real-time.
 -   **Process Management**: Kill long-running processes directly from the UI.
 -   **Custom Kill Scripts**: Specify a custom command (e.g., `pkill`) to stop specific processes, with automatic PID-based fallback.
+-   **Custom Storage Location**: Choose where your commands are saved, including iCloud Drive support for syncing across devices.
 -   **Safe Mode Toggle**: Enable/disable command execution with visual indicators (🔒 Safe Mode / ⚡ Active Mode).
 -   **Global Shortcuts**: Assign keyboard shortcuts to trigger commands even when the app is in the background.
 -   **Modern UI**: Clean interface with Dark Mode support using Tailwind CSS.
@@ -75,6 +76,12 @@ To create a distributable application bundle (e.g., `.app`, `.dmg`, `.exe`, `.de
     -   ⚡ **Active Mode** (Green): Commands can be executed normally
 -   This is useful when you want to prevent accidental execution of privileged commands.
 -   The setting persists across app restarts.
+
+### Storage Location
+-   Click the **Settings (gear icon)** in the header to configure where your commands are saved.
+-   **Custom Path**: Enter any valid path on your system.
+-   **iCloud Drive**: Click **"Use iCloud Drive"** to automatically set the path to your iCloud Drive folder (`~/Library/Mobile Documents/com~apple~CloudDocs/climgr/commands.json`), enabling sync between Macs.
+-   **Reset**: Click **"Reset to Default"** to revert to the default application storage.
 
 ### Shortcuts
 -   Shortcuts registered in the app work globally. Note that if a shortcut is already used by the system or another app, it might conflict.

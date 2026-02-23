@@ -3,6 +3,21 @@ use std::fs::File;
 use std::io::{BufReader, BufWriter};
 use std::path::Path;
 
+/// Expands `~` to the user's home directory.
+///
+/// If the path starts with `~`, it replaces it with the value of the `HOME` environment variable.
+/// If `HOME` is not set, it returns the original string.
+pub fn expand_path(path_str: &str) -> String {
+    if path_str.starts_with('~') {
+        if let Ok(home) = std::env::var("HOME") {
+            if let Some(stripped) = path_str.strip_prefix('~') {
+                return format!("{}{}", home, stripped);
+            }
+        }
+    }
+    path_str.to_string()
+}
+
 /// Retrieves all commands from persistent storage.
 ///
 /// Returns an empty vector if the file doesn't exist. This allows the app to start
@@ -69,7 +84,10 @@ pub fn save_commands(path: &Path, commands: &[Command]) -> Result<(), String> {
 pub fn get_config(path: &Path) -> Result<Config, String> {
     if !path.exists() {
         // Return default config if file doesn't exist
-        return Ok(Config { safe_mode: false });
+        return Ok(Config {
+            safe_mode: false,
+            commands_path: None,
+        });
     }
 
     let file = File::open(path).map_err(|e| e.to_string())?;
@@ -179,7 +197,10 @@ mod tests {
         assert_eq!(default_config.safe_mode, false);
 
         // Save a config with safe mode enabled
-        let config = Config { safe_mode: true };
+        let config = Config {
+            safe_mode: true,
+            commands_path: None,
+        };
         save_config(&file_path, &config).expect("Failed to save config");
 
         // Load and verify
@@ -189,6 +210,68 @@ mod tests {
         // Cleanup
         if file_path.exists() {
             let _ = fs::remove_file(&file_path);
+        }
+    }
+
+    #[test]
+    fn test_expand_path() {
+        let home = std::env::var("HOME").unwrap_or_else(|_| "/".to_string());
+        
+        let path = "~/test/file.json";
+        let expanded = expand_path(path);
+        
+        assert!(expanded.starts_with(&home));
+        
+        // This check depends on whether HOME ends with a slash, so we should be careful.
+        // Usually HOME is /Users/z without trailing slash.
+        // expanded should be /Users/z/test/file.json
+        // Or if HOME is /, expanded is //test/file.json which is valid.
+        
+        let expected_suffix = if home.ends_with('/') {
+            "test/file.json"
+        } else {
+            "/test/file.json"
+        };
+        
+        assert!(expanded.ends_with(expected_suffix));
+        
+        let absolute_path = "/usr/bin/test";
+        let not_expanded = expand_path(absolute_path);
+        assert_eq!(not_expanded, absolute_path);
+
+        // Test multiple tildes - only the first should be expanded
+        let multi_tilde = "~/Documents/file~backup.json";
+        let expanded_multi = expand_path(multi_tilde);
+        // Should start with HOME
+        assert!(expanded_multi.starts_with(&home));
+        // Should contain the second tilde
+        assert!(expanded_multi.contains("file~backup.json"));
+        // Should NOT contain HOME twice (unless HOME contains a tilde, which is rare)
+        let home_count = expanded_multi.matches(&home).count();
+        assert_eq!(home_count, 1);
+    }
+
+    #[test]
+    fn test_ensure_directory_creation() {
+        let temp_dir = std::env::temp_dir();
+        let test_subdir = temp_dir.join("climgr_test_subdir");
+        let file_path = test_subdir.join("commands.json");
+        
+        // Ensure clean state
+        if test_subdir.exists() {
+            let _ = fs::remove_dir_all(&test_subdir);
+        }
+        
+        // Try saving commands - this should create the directory (which is what ensure_storage_directory relies on effectively)
+        let commands = vec![];
+        save_commands(&file_path, &commands).expect("Should create directory and save");
+        
+        assert!(test_subdir.exists());
+        assert!(file_path.exists());
+        
+        // Cleanup
+        if test_subdir.exists() {
+            let _ = fs::remove_dir_all(&test_subdir);
         }
     }
 }

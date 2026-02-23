@@ -9,4 +9,5 @@ export interface Command {
 
 export interface Config {
   safe_mode: boolean;
+  commands_path?: string;
 }

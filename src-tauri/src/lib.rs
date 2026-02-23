@@ -208,6 +208,17 @@ fn kill_command(app_handle: AppHandle, state: State<ProcessManager>, command_id:
 }
 
 fn get_store_path(app: &AppHandle) -> Result<PathBuf, String> {
+    // Check if a custom path is set in the config
+    if let Ok(config_path) = get_config_path(app) {
+        if let Ok(config) = store::get_config(&config_path) {
+            if let Some(path_str) = config.commands_path {
+                let expanded_path = store::expand_path(&path_str);
+                return Ok(PathBuf::from(expanded_path));
+            }
+        }
+    }
+
+    // Fallback to default location
     Ok(app
         .path()
         .app_data_dir()
@@ -477,6 +488,43 @@ fn update_config(app_handle: tauri::AppHandle, config: Config) -> Result<(), Str
     store::save_config(&path, &config)
 }
 
+/// Ensures the storage directory exists.
+#[tauri::command]
+fn ensure_storage_directory(app_handle: tauri::AppHandle) -> Result<String, String> {
+    let path = get_store_path(&app_handle)?;
+    log::info!("Attempting to create storage directory for path: {:?}", path);
+    println!("Debug: Attempting to create storage directory for path: {:?}", path);
+
+    if let Some(parent) = path.parent() {
+        if !parent.exists() {
+            log::info!("Parent directory does not exist, creating: {:?}", parent);
+            println!("Debug: Creating parent directory: {:?}", parent);
+            
+            // Try std::fs first
+            if let Err(e) = std::fs::create_dir_all(parent) {
+                log::warn!("std::fs::create_dir_all failed: {}, attempting mkdir fallback...", e);
+                println!("Debug: std::fs::create_dir_all failed: {}, attempting mkdir fallback...", e);
+                
+                // Fallback to mkdir -p command
+                let output = std::process::Command::new("mkdir")
+                    .arg("-p")
+                    .arg(parent)
+                    .output()
+                    .map_err(|e| format!("Failed to execute mkdir command: {}", e))?;
+                
+                if !output.status.success() {
+                    let stderr = String::from_utf8_lossy(&output.stderr);
+                    return Err(format!("Failed to create directory via mkdir: {}", stderr));
+                }
+            }
+        } else {
+            log::info!("Parent directory already exists: {:?}", parent);
+            println!("Debug: Parent directory already exists: {:?}", parent);
+        }
+    }
+    Ok(path.to_string_lossy().to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -535,7 +583,8 @@ pub fn run() {
             execute_command,
             kill_command,
             get_config,
-            update_config
+            update_config,
+            ensure_storage_directory
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -13,6 +13,7 @@ pub struct Command {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Config {
     pub safe_mode: bool,
+    pub commands_path: Option<String>,
 }
 
 #[cfg(test)]
@@ -45,11 +46,16 @@ mod tests {
 
     #[test]
     fn test_config_default() {
-        let config = Config { safe_mode: false };
+        let config = Config { 
+            safe_mode: false,
+            commands_path: None,
+        };
         assert_eq!(config.safe_mode, false);
+        assert!(config.commands_path.is_none());
 
         let json = serde_json::to_string(&config).expect("Failed to serialize");
         let deserialized: Config = serde_json::from_str(&json).expect("Failed to deserialize");
         assert_eq!(config.safe_mode, deserialized.safe_mode);
+        assert_eq!(config.commands_path, deserialized.commands_path);
     }
 }

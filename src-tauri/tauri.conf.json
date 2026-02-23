@@ -2,7 +2,7 @@
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "climgr",
   "version": "0.1.0",
-  "identifier": "com.climgr.app",
+  "identifier": "com.zzuse.climgr",
   "build": {
     "frontendDist": "../out",
     "devUrl": "http://localhost:3000",
@@ -32,6 +32,9 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "macOS": {
+      "entitlements": "./Entitlements.plist"
+    }
   }
 }
